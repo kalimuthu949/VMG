@@ -1,0 +1,18 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "approval-commandset-command-set": {
+      "components": [
+        {
+          "entrypoint": "./lib/extensions/approvalCommandset/ApprovalCommandsetCommandSet.js",
+          "manifest": "./src/extensions/approvalCommandset/ApprovalCommandsetCommandSet.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {},
+  "localizedResources": {
+    "ApprovalCommandsetCommandSetStrings": "lib/extensions/approvalCommandset/loc/{locale}.js"
+  }
+}
