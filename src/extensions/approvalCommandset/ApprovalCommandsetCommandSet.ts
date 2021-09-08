@@ -12,7 +12,7 @@ import {sp} from "@pnp/pnpjs";
 
 import * as strings from 'ApprovalCommandsetCommandSetStrings';
 
-
+var arrSelectedRows=[];
 
 /**
  * If your command set uses the ClientSideComponentProperties JSON input,
@@ -62,52 +62,59 @@ export default class ApprovalCommandsetCommandSet extends BaseListViewCommandSet
 
       if(event.selectedRows.length>0)
       {
-        event.selectedRows[0]["_values"].forEach(async function(val,key)
+        arrSelectedRows=[];
+        for(var i=0;i<event.selectedRows.length;i++)
         {
-                if(key=="ContentType"&&val=="Folder")
-                flgDoc=false;
+            event.selectedRows[i]["_values"].forEach(async function(val,key)
+            {
+              if(key=="ContentType"&&val=="Folder")
+              flgDoc=false;
 
-                if(key=="FileRef")
+              if(key=="FileRef")
+              {
+                FileURL=val;
+                var RootFolderUrl=val.split("/");
+                var RootFolderName=RootFolderUrl[RootFolderUrl.length-2];
+                FileName=RootFolderUrl[RootFolderUrl.length-1];
+
+                if(HoldFolderName.toLowerCase()==RootFolderName.toLowerCase())
                 {
-                  FileURL=val;
-                  var RootFolderUrl=val.split("/");
-                  var RootFolderName=RootFolderUrl[RootFolderUrl.length-2];
-                  FileName=RootFolderUrl[RootFolderUrl.length-1];
+                  flgRootFolder=true;
 
-                  if(HoldFolderName.toLowerCase()==RootFolderName.toLowerCase())
-                  {
-                    flgRootFolder=true;
-
-                    ApprovalFolderURL=RootFolderUrl.slice(0, -2).join("/")+"/"+ApprovalFolderName;
-                    RejectedFolderURL=RootFolderUrl.slice(0, -2).join("/")+"/"+RejectedFolderName;
-                    
-                    
-                  }
+                  ApprovalFolderURL=RootFolderUrl.slice(0, -2).join("/")+"/"+ApprovalFolderName;
+                  RejectedFolderURL=RootFolderUrl.slice(0, -2).join("/")+"/"+RejectedFolderName;
+                  
+                  
                 }
-                
-  
-                await [];
-                
-        });
+              }
+              await [];
+              
+            });
+
+            arrSelectedRows.push({"ApprovalFolderURL":ApprovalFolderURL,"RejectedFolderURL":RejectedFolderURL,"FileName":FileName,"FileURL":FileURL});
+        }
       }
 
-      this.properties.ApprovalFolderURL=ApprovalFolderURL;
+      /*this.properties.ApprovalFolderURL=ApprovalFolderURL;
       this.properties.RejectedFolderURL=RejectedFolderURL;
       this.properties.FileName=FileName;
-      this.properties.FileURL=FileURL;
+      this.properties.FileURL=FileURL;*/
 
     if (compareOneCommand) 
     {
       // This command should be hidden unless exactly one row is selected.
-      compareOneCommand.visible = event.selectedRows.length === 1&&flgDoc&&flgRootFolder&&Libraryurl==Libraryname;
+      compareOneCommand.visible = event.selectedRows.length > 0&&flgDoc&&flgRootFolder&&Libraryurl==Libraryname;
 
     }
 
     if (compareOneCommand2) 
     {
       // This command should be hidden unless exactly one row is selected.
-      compareOneCommand2.visible = event.selectedRows.length === 1&&flgDoc&&flgRootFolder&&Libraryurl==Libraryname;
+      compareOneCommand2.visible = event.selectedRows.length > 0&&flgDoc&&flgRootFolder&&Libraryurl==Libraryname;
     }
+
+    
+
   }
 
   @override
@@ -115,10 +122,12 @@ export default class ApprovalCommandsetCommandSet extends BaseListViewCommandSet
   {
     switch (event.itemId) {
       case 'COMMAND_1':
-        updateApprovalFolder(this.properties.ApprovalFolderURL,this.properties.FileName,this.properties.FileURL);
+        //updateApprovalFolder(this.properties.ApprovalFolderURL,this.properties.FileName,this.properties.FileURL);
+        updateApprovalFolder();
         break;
       case 'COMMAND_2':
-        updateRejectFolder(this.properties.RejectedFolderURL,this.properties.FileName,this.properties.FileURL);
+        //updateRejectFolder(this.properties.RejectedFolderURL,this.properties.FileName,this.properties.FileURL);
+        updateRejectFolder();
         break;
       default:
         throw new Error('Unknown command');
@@ -126,7 +135,8 @@ export default class ApprovalCommandsetCommandSet extends BaseListViewCommandSet
   }
 }
 
-async function updateApprovalFolder(ApprovalFolder,FileNametomove,sourceURL)
+//async function updateApprovalFolder(ApprovalFolder,FileNametomove,sourceURL)
+async function updateApprovalFolder()
 {
     /*await sp.web.lists.getByTitle("Projects").items.add({"Title":"Test"}).then(function(data)
     {
@@ -137,7 +147,9 @@ async function updateApprovalFolder(ApprovalFolder,FileNametomove,sourceURL)
         Dialog.alert(`someting went wrong.please try again`);
     })*/
 
-    if(ApprovalFolder&&FileNametomove)
+    
+
+    /*if(ApprovalFolder&&FileNametomove)
     {
         // destination is a server-relative url of a new file
         const destinationUrl = ApprovalFolder+"/"+FileNametomove;
@@ -155,12 +167,38 @@ async function updateApprovalFolder(ApprovalFolder,FileNametomove,sourceURL)
               location.reload();
             });
         })
+    }*/
+    
+    var count=0;
+    for(var i=0;i<arrSelectedRows.length;i++)
+    {
+      if(arrSelectedRows[i].ApprovalFolderURL&&arrSelectedRows[i].FileName)
+    {
+        // destination is a server-relative url of a new file
+        const destinationUrl = arrSelectedRows[i].ApprovalFolderURL+"/"+arrSelectedRows[i].FileName;
+
+        await sp.web.getFileByServerRelativePath(arrSelectedRows[i].FileURL).moveTo(destinationUrl).then(function(data)
+        {
+          count++;
+        }).catch(function(error)
+        {
+            Dialog.alert(`someting went wrong.please try again`).then(function(){
+              location.reload();
+            });
+        })
     }
+    }
+            Dialog.alert(`Approved Sucessfully`).then(function(){
+              location.reload();
+            });
 
     
 }
 
-async function updateRejectFolder(ApprovalFolder,FileNametomove,sourceURL)
+//async function updateRejectFolder(ApprovalFolder,FileNametomove,sourceURL)
+async function updateRejectFolder(
+
+)
 {
     /*await sp.web.lists.getByTitle("Projects").items.add({"Title":"Test"}).then(function(data)
     {
@@ -171,7 +209,7 @@ async function updateRejectFolder(ApprovalFolder,FileNametomove,sourceURL)
         Dialog.alert(`someting went wrong.please try again`);
     })*/
 
-    if(ApprovalFolder&&FileNametomove)
+    /*if(ApprovalFolder&&FileNametomove)
     {
         // destination is a server-relative url of a new file
         const destinationUrl = ApprovalFolder+"/"+FileNametomove;
@@ -188,7 +226,31 @@ async function updateRejectFolder(ApprovalFolder,FileNametomove,sourceURL)
               location.reload();
             });
         })
+    }*/
+
+
+    var count=0;
+    for(var i=0;i<arrSelectedRows.length;i++)
+    {
+      if(arrSelectedRows[i].RejectedFolderURL&&arrSelectedRows[i].FileName)
+    {
+        // destination is a server-relative url of a new file
+        const destinationUrl = arrSelectedRows[i].RejectedFolderURL+"/"+arrSelectedRows[i].FileName;
+
+        await sp.web.getFileByServerRelativePath(arrSelectedRows[i].FileURL).moveTo(destinationUrl).then(function(data)
+        {
+          count++;
+        }).catch(function(error)
+        {
+            Dialog.alert(`someting went wrong.please try again`).then(function(){
+              location.reload();
+            });
+        })
     }
+    }
+            Dialog.alert(`Rejected Sucessfully`).then(function(){
+              location.reload();
+            });
 
     
 }
