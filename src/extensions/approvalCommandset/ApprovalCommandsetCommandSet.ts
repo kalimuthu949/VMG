@@ -160,7 +160,7 @@ async function updateApprovalFolder()
     {
         // destination is a server-relative url of a new file
         const destinationUrl = arrSelectedRows[i].ApprovalFolderURL+"/"+arrSelectedRows[i].FileName;
-       const resumeFolderUrl = "/sites/HRPrivateNew/Shared%20Documents/1. Recruiting & Onboarding/2. Resumes/"+arrSelectedRows[i].JobCode+"/"+arrSelectedRows[i].FileName
+       const resumeFolderUrl = "/sites/HRPrivateNew/Shared%20Documents/1. Recruiting/2. Resumes/"+arrSelectedRows[i].JobCode+"/"+arrSelectedRows[i].FileName
         // await sp.web.getFileByServerRelativePath(arrSelectedRows[i].FileURL).moveTo(destinationUrl).then(async function(data)
         await sp.web.getFileById(arrSelectedRows[i].ItemId).copyTo(resumeFolderUrl, true).then(async()=>{
           await sp.web.getFileById(arrSelectedRows[i].ItemId).moveTo(destinationUrl).then(async function(data)
